@@ -1,0 +1,18 @@
+body { font-family: Arial, sans-serif; margin: 2rem; }
+#status { margin-top: 1rem; color: #555; }
+
+table { 
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+    margin:auto;
+    width: 95vw;
+}
+
+th, td {
+    border: 1px solid #ccc;
+    padding: 8px; text-align: left;
+}
+
+th {
+    background: #f5f5f5;
+}
