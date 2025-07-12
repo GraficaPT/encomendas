@@ -32,6 +32,14 @@ export function renderTabela(colunasInput, dados) {
   btnAtual.onclick = atualizarTudo
   controles.appendChild(btnAtual)
 
+  const btnLogout = document.createElement('button')
+  btnLogout.textContent = '🚪 Logout'
+  btnLogout.onclick = async () => {
+    await supabase.auth.signOut()
+    window.location.reload()
+  }
+  controles.appendChild(btnLogout)
+
   // Tabela
   const tabela = document.createElement('table')
   const thead = document.createElement('thead')
