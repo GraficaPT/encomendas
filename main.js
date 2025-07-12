@@ -1,17 +1,20 @@
 import { supabase } from './config.js'
+import { fetchColunas, fetchEncomendas } from './supabase.js'
+import { renderTabela, setColunas } from './tabela.js'
 
-// 1. Função para login com magic link
+// --- Autenticação por Magic Link ---
 async function pedirLoginMagicLink() {
   const { data: { session } } = await supabase.auth.getSession()
-  if (session) return session
+  if (session) return session // Já autenticado
 
-  // Mostra formulário de email
+  // Mostra form para introduzir email
   const div = document.createElement('div')
   div.style.textAlign = 'center'
   div.innerHTML = `
+    <h2>Acesso restrito</h2>
     <form id="magic-link-form">
       <input type="email" id="magic-link-email" placeholder="Email" required style="font-size:1.2rem;padding:0.5rem;" />
-      <button type="submit" style="font-size:1.2rem;padding:0.5rem 2rem;">Enviar</button>
+      <button type="submit" style="font-size:1.2rem;padding:0.5rem 2rem;">Receber link de acesso</button>
     </form>
     <div id="magic-link-status"></div>
   `
@@ -31,12 +34,35 @@ async function pedirLoginMagicLink() {
   }
 }
 
-// 2. Redireciona após autenticação pelo magic link
+// --- Só faz reload automático no evento certo (evita loops infinitos) ---
 supabase.auth.onAuthStateChange((event, session) => {
   if (event === "SIGNED_IN" && session) {
-    window.location.href = window.location.pathname
+    // Só faz reload se vier com parâmetros na URL (magic link)
+    if (window.location.search || window.location.hash) {
+      window.location.href = window.location.pathname
+    }
   }
 })
 
-// 3. Só carrega o resto se o user estiver autenticado
+// --- Garante que processa a sessão vinda do magic link logo ao entrar ---
+await supabase.auth.getSession()
+
+// --- Só carrega a app para utilizadores autenticados ---
 await pedirLoginMagicLink()
+
+// --- O resto do teu código só corre depois de autenticado ---
+async function carregarTudo() {
+  document.getElementById('status').textContent = 'A carregar…'
+  try {
+    const colunas = await fetchColunas()
+    const dados = await fetchEncomendas()
+    setColunas(colunas)
+    renderTabela(colunas, dados)
+    document.getElementById('status').textContent = ''
+  } catch (err) {
+    console.error(err)
+    document.getElementById('status').textContent = 'Erro ao carregar dados.'
+  }
+}
+
+carregarTudo()
