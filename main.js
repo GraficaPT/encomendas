@@ -9,10 +9,9 @@ async function pedirLoginMagicLink() {
   const div = document.createElement('div')
   div.style.textAlign = 'center'
   div.innerHTML = `
-    <h2>Acesso restrito</h2>
     <form id="magic-link-form">
       <input type="email" id="magic-link-email" placeholder="Email" required style="font-size:1.2rem;padding:0.5rem;" />
-      <button type="submit" style="font-size:1.2rem;padding:0.5rem 2rem;">Receber link de acesso</button>
+      <button type="submit" style="font-size:1.2rem;padding:0.5rem 2rem;">Enviar</button>
     </form>
     <div id="magic-link-status"></div>
   `
