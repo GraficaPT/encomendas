@@ -32,8 +32,8 @@ async function pedirLoginMagicLink() {
 }
 
 // 2. Redireciona após autenticação pelo magic link
-supabase.auth.onAuthStateChange((_event, session) => {
-  if (session) {
+supabase.auth.onAuthStateChange((event, session) => {
+  if (event === "SIGNED_IN" && session) {
     window.location.href = window.location.pathname
   }
 })
