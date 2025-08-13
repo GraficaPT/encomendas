@@ -1,105 +1,104 @@
-*{
-    font-family:Arial, Helvetica, sans-serif;
+* {
+    font-family: Arial, Helvetica, sans-serif;
     user-select: none;
-    font-size:2.5vh;
+    font-size: clamp(12px, 2.5vh, 18px);
+    box-sizing: border-box;
 }
 
-body{
-    background-color: rgb(34, 34, 34);
+body {
+    background-color: #222;
     padding: 1vh;
+    margin: 0;
 }
 
-  
-  #status {
+#status {
     margin-top: 1rem;
-    color: #555;
-  }
+    color: #bbb;
+}
 
-  controls button {
-    padding: 1vh;
-    border:#555;
-    margin-right: 2vh;
-    margin-bottom: 1vh;
+controls button {
+    padding: 1vh 2vh;
+    border: none;
+    margin: 0 2vh 1vh 0;
     background-color: transparent;
-   color: white; 
-  }
+    color: #fff;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
 
-  controls button:hover {
+controls button:hover {
     cursor: pointer;
-    background-color:#555;
-  }
-  
-  h1 {
-    margin:auto;
-    text-align: center;
-    color: white;
-  }
+    background-color: #555;
+}
 
-  .tabela-wrapper {
-    max-width: 90vw;
+h1 {
+    margin: auto;
+    text-align: center;
+    color: #fff;
+    font-size: clamp(18px, 4vw, 28px);
+}
+
+.tabela-wrapper {
+    max-width: 100%;
     margin: auto;
     overflow-x: auto;
-  }
-  
-  table {
-    font-family: arial, sans-serif;
+    -webkit-overflow-scrolling: touch;
+}
+
+table {
     border-collapse: collapse;
     width: 100%;
     background-color: transparent;
-    color: white;
-  }
-  
- td, th {
-  border: 0.1vh solid #ffffff;
-  text-align: center;
-  padding: 1vh;
-  color: white;
-  }
+    color: #fff;
+}
 
-  th{
-  text-align: center;
-  }
-  td input {
-    width: 90%;
-    margin:auto;
+td, th {
+    border: 0.1vh solid #fff;
+    text-align: center;
+    padding: 1vh;
+}
+
+td input {
+    width: 100%;
     background-color: transparent;
-    border: transparent;
-    color: white;
-  }
+    border: none;
+    color: #fff;
+    text-align: center;
+    font-size: inherit;
+}
 
-  .finished{
-    background-color:#2196F3;
+.finished {
+    background-color: #2196F3;
+}
 
-  }
-
-  .selected{
+.selected {
     background-color: #ccc;
-  }
+    color: #000;
+}
 
 .switch {
     position: relative;
     display: inline-block;
-    width: 60%;
+    width: 40px;
+    height: 22px;
+}
 
-  }
-  
-  .switch input {
+.switch input {
     opacity: 0;
     width: 0;
     height: 0;
-  }
-  
-  .slider {
+}
+
+.slider {
     position: absolute;
     cursor: pointer;
     background-color: lightcoral;
     border-radius: 34px;
     top: 0; left: 0;
     right: 0; bottom: 0;
-    transition: .4s;
-  }
-  
-  .slider::before {
+    transition: 0.4s;
+}
+
+.slider::before {
     position: absolute;
     content: "";
     height: 18px;
@@ -107,15 +106,34 @@ body{
     left: 2px;
     bottom: 2px;
     background-color: white;
-    transition: .4s;
+    transition: 0.4s;
     border-radius: 50%;
-  }
-  
-  input:checked + .slider {
+}
+
+input:checked + .slider {
     background-color: lightgreen;
-  }
-  
-  input:checked + .slider::before {
+}
+
+input:checked + .slider::before {
     transform: translateX(18px);
-  }
-  
+}
+
+@media (max-width: 768px) {
+    controls button {
+        width: 100%;
+        margin: 0 0 1vh 0;
+    }
+    td, th {
+        padding: 0.5vh;
+        font-size: clamp(10px, 2vh, 14px);
+    }
+}
+
+@media (max-width: 480px) {
+    table {
+        font-size: clamp(9px, 1.8vh, 12px);
+    }
+    h1 {
+        font-size: clamp(16px, 5vw, 22px);
+    }
+}
