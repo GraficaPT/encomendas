@@ -49,7 +49,15 @@ export function renderTabela(colunasInput, dados) {
   const trHead = document.createElement('tr')
   for (const col of colunas) {
     const th = document.createElement('th')
-    th.textContent =  col.nome.toUpperCase()
+
+    // Se for a coluna "valor", soma e coloca no título
+    if (col.nome.toLowerCase() === 'valor') {
+      const total = dados.reduce((acc, item) => acc + (Number(item[col.nome]) || 0), 0)
+      th.textContent = `${col.nome.toUpperCase()} (${total.toFixed(2).replace('.', ',')})`
+    } else {
+      th.textContent = col.nome.toUpperCase()
+    }
+
     trHead.appendChild(th)
   }
   thead.appendChild(trHead)
@@ -63,13 +71,11 @@ export function renderTabela(colunasInput, dados) {
       const nome = col.nome
       const td = document.createElement('td')
 
-      // id -> seleção
       if (nome === 'id') {
         td.textContent = item[nome]
         td.style.cursor = 'pointer'
         td.onclick = () => toggleSelecaoLinha(tr, item.id)
       }
-      // Ficheiros: só mostra link(s), nunca editável!
       else if (FILE_FIELDS.includes(nome)) {
         if (item[nome]) {
           const links = item[nome].split(',')
@@ -83,7 +89,6 @@ export function renderTabela(colunasInput, dados) {
           })
         }
       }
-      // Booleanos -> switch
       else if (col.tipo === 'boolean') {
         const label = document.createElement('label')
         label.classList.add('switch')
@@ -98,7 +103,6 @@ export function renderTabela(colunasInput, dados) {
         label.appendChild(span)
         td.appendChild(label)
       }
-      // Restantes campos -> input texto
       else {
         const input = document.createElement('input')
         input.name = nome
@@ -109,7 +113,6 @@ export function renderTabela(colunasInput, dados) {
       tr.appendChild(td)
     }
 
-    // Classe finished se algum booleano estiver true
     if (colunas.some(c => c.tipo === 'boolean' && item[c.nome])) {
       tr.classList.add('finished')
     }
@@ -123,7 +126,7 @@ export function renderTabela(colunasInput, dados) {
   wrapper.appendChild(tabela)
 }
 
-// Adiciona linha nova (apenas aqui podes fazer upload)
+// Adiciona linha nova
 function criarLinhaEditavel(tbody) {
   const linha = document.createElement('tr')
 
@@ -131,14 +134,12 @@ function criarLinhaEditavel(tbody) {
     const nome = col.nome
     const td = document.createElement('td')
 
-    // id é auto-gerado
     if (nome === 'id') {
       td.textContent = '(auto)'
       linha.appendChild(td)
       continue
     }
 
-    // Upload ficheiros só aqui!
     if (FILE_FIELDS.includes(nome)) {
       const input = document.createElement('input')
       input.type = 'file'
@@ -161,7 +162,6 @@ function criarLinhaEditavel(tbody) {
             a.style.display = 'block'
             td.appendChild(a)
           })
-          // Guarda os links num atributo oculto para o atualizarTudo ler
           td.setAttribute('data-links', links.join(','))
         } catch (err) {
           td.textContent = 'Erro'
@@ -174,7 +174,6 @@ function criarLinhaEditavel(tbody) {
       continue
     }
 
-    // Booleanos
     if (col.tipo === 'boolean') {
       const label = document.createElement('label')
       label.classList.add('switch')
@@ -200,7 +199,6 @@ function criarLinhaEditavel(tbody) {
   tbody.appendChild(linha)
 }
 
-// Atualiza tudo menos os ficheiros (ficheiros só entram ao adicionar nova linha!)
 async function atualizarTudo() {
   const tabela = document.querySelector('#tabela-wrapper table')
   if (!tabela) return
@@ -225,10 +223,8 @@ async function atualizarTudo() {
       const nome = col.nome
       if (nome === 'id') continue
 
-      // Ficheiros são ignorados nas linhas já existentes (não mexe!)
       if (FILE_FIELDS.includes(nome)) {
         if (!id) {
-          // Só para linhas novas (adicionar)
           const links = td.getAttribute('data-links')
           obj[nome] = links || null
         }
@@ -263,7 +259,7 @@ async function atualizarTudo() {
     }
 
     if (inserts.length) {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('Encomendas')
         .insert(inserts)
 
