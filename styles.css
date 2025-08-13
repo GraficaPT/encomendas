@@ -1,139 +1,140 @@
 * {
-    font-family: Arial, Helvetica, sans-serif;
-    user-select: none;
-    font-size: clamp(12px, 2.5vh, 18px);
-    box-sizing: border-box;
+  font-family: Arial, Helvetica, sans-serif;
+  user-select: none;
+  font-size: clamp(12px, 2.5vh, 18px);
+  box-sizing: border-box;
+  color: #fff;
 }
 
 body {
-    background-color: #222;
-    padding: 1vh;
-    margin: 0;
+  background-color: #222;
+  padding: 1vh;
+  margin: 0;
 }
 
 #status {
-    margin-top: 1rem;
-    color: #bbb;
+  margin-top: 1rem;
+  color: #bbb;
 }
 
 controls button {
-    padding: 1vh 2vh;
-    border: none;
-    margin: 0 2vh 1vh 0;
-    background-color: transparent;
-    color: #fff;
-    transition: background-color 0.3s ease, color 0.3s ease;
+  padding: 1vh 2vh;
+  border: none;
+  margin: 0 2vh 1vh 0;
+  background-color: transparent;
+  color: #fff;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 controls button:hover {
-    cursor: pointer;
-    background-color: #555;
+  cursor: pointer;
+  background-color: #555;
 }
 
 h1 {
-    margin: auto;
-    text-align: center;
-    color: #fff;
-    font-size: clamp(18px, 4vw, 28px);
+  margin: auto;
+  text-align: center;
+  color: #fff;
+  font-size: clamp(18px, 4vw, 28px);
 }
 
 .tabela-wrapper {
-    max-width: 100%;
-    margin: auto;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  margin: auto;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 table {
-    border-collapse: collapse;
-    width: 100%;
-    background-color: transparent;
-    color: #fff;
+  border-collapse: collapse;
+  width: 100%;
+  background-color: transparent;
+  color: #fff;
 }
 
 td, th {
-    border: 0.1vh solid #fff;
-    text-align: center;
-    padding: 1vh;
+  border: 0.1vh solid #fff;
+  text-align: center;
+  padding: 1vh;
 }
 
 td input {
-    width: 100%;
-    background-color: transparent;
-    border: none;
-    color: #fff;
-    text-align: center;
-    font-size: inherit;
+  width: 100%;
+  background-color: transparent;
+  border: none;
+  color: #fff;
+  text-align: center;
+  font-size: inherit;
 }
 
 .finished {
-    background-color: #2196F3;
+  background-color: #2196F3;
 }
 
 .selected {
-    background-color: #ccc;
-    color: #000;
+  background-color: #ccc;
+  color: #000;
 }
 
 .switch {
-    position: relative;
-    display: inline-block;
-    width: 40px;
-    height: 22px;
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
 }
 
 .switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
+  opacity: 0;
+  width: 0;
+  height: 0;
 }
 
 .slider {
-    position: absolute;
-    cursor: pointer;
-    background-color: lightcoral;
-    border-radius: 34px;
-    top: 0; left: 0;
-    right: 0; bottom: 0;
-    transition: 0.4s;
+  position: absolute;
+  cursor: pointer;
+  background-color: lightcoral;
+  border-radius: 34px;
+  top: 0; left: 0;
+  right: 0; bottom: 0;
+  transition: 0.4s;
 }
 
 .slider::before {
-    position: absolute;
-    content: "";
-    height: 18px;
-    width: 18px;
-    left: 2px;
-    bottom: 2px;
-    background-color: white;
-    transition: 0.4s;
-    border-radius: 50%;
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
 }
 
 input:checked + .slider {
-    background-color: lightgreen;
+  background-color: lightgreen;
 }
 
 input:checked + .slider::before {
-    transform: translateX(18px);
+  transform: translateX(18px);
 }
 
 @media (max-width: 768px) {
-    controls button {
-        width: 100%;
-        margin: 0 0 1vh 0;
-    }
-    td, th {
-        padding: 0.5vh;
-        font-size: clamp(10px, 2vh, 14px);
-    }
+  controls button {
+      width: 100%;
+      margin: 0 0 1vh 0;
+  }
+  td, th {
+      padding: 0.5vh;
+      font-size: clamp(10px, 2vh, 14px);
+  }
 }
 
 @media (max-width: 480px) {
-    table {
-        font-size: clamp(9px, 1.8vh, 12px);
-    }
-    h1 {
-        font-size: clamp(16px, 5vw, 22px);
-    }
+  table {
+      font-size: clamp(9px, 1.8vh, 12px);
+  }
+  h1 {
+      font-size: clamp(16px, 5vw, 22px);
+  }
 }
