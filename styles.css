@@ -36,9 +36,12 @@ body {
   }
   
   table {
-    width: 100%;
+    font-family: arial, sans-serif;
     border-collapse: collapse;
-    table-layout: fixed;
+    width: 100%;
+    background-color: transparent;
+    color: white;
+    font-size:0.8vw;
   }
   
   th, td {
