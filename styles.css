@@ -1,9 +1,13 @@
-body {
-    font-family: Arial, sans-serif;
-    margin: 2rem;
-    overflow-x: hidden;
+*{
+    font-family:Arial, Helvetica, sans-serif;
+    user-select: none;
+}
 
-  }
+body{
+    background-color: rgb(34, 34, 34);
+    padding: 1vh;
+}
+
   
   #status {
     margin-top: 1rem;
