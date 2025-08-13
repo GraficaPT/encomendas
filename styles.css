@@ -79,8 +79,8 @@ body{
 .switch {
     position: relative;
     display: inline-block;
-    width: 70%;
-    height: 70%;
+    width: 60%;
+
   }
   
   .switch input {
