@@ -1,68 +1,40 @@
 import { supabase } from './config.js'
 
-// ---- Utils ----
+const DBG = true;
+function log(...a){ if (DBG) console.log('[SB]', ...a) }
+
 function getPwd() {
   return sessionStorage.getItem('app_pwd') || ''
 }
+// só para inspeção visual (não imprime a password inteira)
+export function getPwdDebug() {
+  const p = getPwd()
+  if (!p) return '(vazio)'
+  return `${p.slice(0,2)}***${p.slice(-1)}`
+}
 
-// ---- Auth por password única (RPC verify_master_password) ----
 export async function verifyPassword(pwd) {
+  log('verifyPassword rpc call')
   const { data, error } = await supabase.rpc('verify_master_password', { pwd })
-  if (error) throw error
+  if (error) { console.error('[SB] verifyPassword error', error); throw error }
+  log('verifyPassword =>', data)
   return !!data
 }
 
-// ---- Ficheiros (storage) ----
-export async function uploadFileToSupabase(file) {
-  const timestamp = Date.now()
-  const filePath = `${timestamp}_${file.name}`
-  const { error } = await supabase.storage.from('ficheirosencomendas').upload(filePath, file)
-  if (error) throw error
-  const { data } = supabase.storage.from('ficheirosencomendas').getPublicUrl(filePath)
-  return data.publicUrl
-}
-
-// ---- Dados ----
-
-// View de colunas usada para montar o cabeçalho da tabela
 export async function fetchColunas() {
-  const { data, error } = await supabase
-    .from('view_colunas_encomendas')
-    .select('*')
-  if (error) throw error
-  return data.map(c => ({ nome: c.column_name, tipo: c.data_type }))
+  log('fetchColunas select view_colunas_encomendas')
+  const { data, error } = await supabase.from('view_colunas_encomendas').select('*')
+  if (error) { console.error('[SB] fetchColunas error', error); throw error }
+  const mapped = data.map(c => ({ nome: c.column_name, tipo: c.data_type }))
+  log('fetchColunas ok', mapped)
+  return mapped
 }
 
-// Lista encomendas via RPC
 export async function fetchEncomendas() {
-  const { data, error } = await supabase.rpc('list_encomendas', { pwd: getPwd() })
-  if (error) throw error
+  const pwd = getPwd()
+  log('fetchEncomendas rpc', { hasPwd: !!pwd })
+  const { data, error } = await supabase.rpc('list_encomendas', { pwd })
+  if (error) { console.error('[SB] fetchEncomendas error', error); throw error }
+  log('fetchEncomendas ok', { rows: data?.length })
   return data
-}
-
-// Atualiza linhas (array de objetos com id e campos a alterar)
-export async function updateEncomendas(updates) {
-  const { error } = await supabase.rpc('update_encomendas', {
-    pwd: getPwd(),
-    rows: updates
-  })
-  if (error) throw error
-}
-
-// Insere linhas (array de objetos sem id)
-export async function insertEncomendas(inserts) {
-  const { error } = await supabase.rpc('insert_encomendas', {
-    pwd: getPwd(),
-    rows: inserts
-  })
-  if (error) throw error
-}
-
-// Apaga por ids (array de bigint)
-export async function deleteEncomendas(ids) {
-  const { error } = await supabase.rpc('delete_encomendas', {
-    pwd: getPwd(),
-    ids
-  })
-  if (error) throw error
 }
