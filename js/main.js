@@ -2,8 +2,8 @@ import { supabase } from './config.js'
 import { fetchColunas, fetchEncomendas, verifyPassword } from './supabase.js'
 import { renderTabela, setColunas } from './tabela.js'
 
-// --- Autenticação por password única ---
-function showPasswordForm(msg='Acesso restrito') {
+// --- Mostrar formulário de password ---
+function showPasswordForm(msg = 'Acesso restrito') {
   const div = document.createElement('div')
   div.style.textAlign = 'center'
   div.innerHTML = `
@@ -34,13 +34,14 @@ function showPasswordForm(msg='Acesso restrito') {
   })
 }
 
+// --- Garantir sessão válida ---
 async function garantirSessao() {
   const pwd = sessionStorage.getItem('app_pwd')
   if (!pwd) {
     showPasswordForm()
     return false
   }
-  const ok = await verifyPassword(pwd).catch(()=>false)
+  const ok = await verifyPassword(pwd).catch(() => false)
   if (!ok) {
     sessionStorage.removeItem('app_pwd')
     showPasswordForm('Sessão expirada ou password inválida')
@@ -49,11 +50,12 @@ async function garantirSessao() {
   return true
 }
 
+// --- Carregar dados ---
 async function carregarTudo() {
   const has = await garantirSessao()
   if (!has) return
 
-  // Resto do layout
+  // Estrutura principal
   document.body.innerHTML = `
     <div id="status"></div>
     <div class="tabela-wrapper" id="tabela-wrapper"></div>

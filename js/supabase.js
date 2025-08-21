@@ -53,3 +53,10 @@ export async function deleteEncomendas(ids) {
   const { error } = await supabase.rpc('delete_encomendas', { pwd: getPwd(), ids })
   if (error) throw error
 }
+
+export async function sha256(message) {
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
