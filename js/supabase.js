@@ -1,25 +1,16 @@
 import { supabase } from './config.js'
 
-const DBG = true
-function log(...a){ if (DBG) console.log('[SB]', ...a) }
-
 function getPwd() {
   return sessionStorage.getItem('app_pwd') || ''
 }
-export function getPwdDebug() {
-  const p = getPwd()
-  if (!p) return '(vazio)'
-  return `${p.slice(0,2)}***${p.slice(-1)}`
-}
 
 export async function verifyPassword(pwd) {
-  log('verifyPassword rpc call')
   const { data, error } = await supabase.rpc('verify_master_password', { pwd })
-  if (error) { console.error('[SB] verifyPassword error', error); throw error }
+  if (error) throw error
   return !!data
 }
 
-/** Fallback fixo pelas colunas reais da tabela Encomendas */
+/** Fallback fixo com as colunas reais da tua tabela Encomendas */
 const FALLBACK_COLS = [
   { nome: 'id',        tipo: 'bigint' },
   { nome: 'data',      tipo: 'date' },
@@ -34,28 +25,29 @@ const FALLBACK_COLS = [
   { nome: 'executado', tipo: 'boolean' },
 ]
 
+/** Busca colunas via RPC (se existir); caso contrário usa fallback */
 export async function fetchColunas() {
-  try {
-    const { data, error } = await supabase.rpc('get_encomendas_columns')
-    if (error) throw error
-    if (!data?.length) return FALLBACK_COLS
-    return data.map(c => ({ nome: c.column_name, tipo: c.data_type }))
-  } catch (e) {
-    return FALLBACK_COLS
+  // tenta RPC opcional
+  const rpc = await supabase.rpc('get_encomendas_columns')
+  if (!rpc.error && Array.isArray(rpc.data) && rpc.data.length) {
+    return rpc.data.map(c => ({ nome: c.column_name, tipo: c.data_type }))
   }
+  // tenta a view (se existir)
+  const view = await supabase.from('view_colunas_encomendas').select('*')
+  if (!view.error && Array.isArray(view.data) && view.data.length) {
+    return view.data.map(c => ({ nome: c.column_name, tipo: c.data_type }))
+  }
+  // fallback
+  return FALLBACK_COLS
 }
 
-
 export async function fetchEncomendas() {
-  const pwd = getPwd()
-  log('fetchEncomendas rpc', { hasPwd: !!pwd })
-  const { data, error } = await supabase.rpc('list_encomendas', { pwd })
-  if (error) { console.error('[SB] fetchEncomendas error', error); throw error }
-  log('fetchEncomendas ok', { rows: data?.length })
+  const { data, error } = await supabase.rpc('list_encomendas', { pwd: getPwd() })
+  if (error) throw error
   return data
 }
 
-// (se já usas uploads e CRUD, mantêm como estavam; não mexi aqui)
+/** Storage */
 export async function uploadFileToSupabase(file) {
   const timestamp = Date.now()
   const filePath = `${timestamp}_${file.name}`
@@ -65,7 +57,7 @@ export async function uploadFileToSupabase(file) {
   return data.publicUrl
 }
 
-// Operações de escrita (caso já tenhas as RPCs criadas)
+/** CRUD via RPCs (se quiseres usar já) */
 export async function updateEncomendas(updates) {
   const { error } = await supabase.rpc('update_encomendas', { pwd: getPwd(), rows: updates })
   if (error) throw error
