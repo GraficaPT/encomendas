@@ -114,7 +114,7 @@ td input {
 .btn {
   color: #000;
   background-color: white;
-  border-radius: 10%;
+  margin-bottom: 20px;
 }
 
 input:checked + .slider {
