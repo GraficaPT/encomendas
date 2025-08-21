@@ -112,8 +112,8 @@ td input {
 }
 
 .btn {
-  color: #000;
-  background-color: white;
+  color: white;
+  background-color: transparent;
   margin-bottom: 20px;
   padding: 10px;
 }
