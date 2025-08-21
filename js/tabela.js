@@ -1,4 +1,4 @@
-import { uploadFileToSupabase } from './supabase.js'
+import { uploadFileToSupabase, updateEncomendas, insertEncomendas, deleteEncomendas } from './supabase.js'
 import { supabase } from './config.js'
 
 let selectedIds = new Set()
@@ -34,10 +34,7 @@ export function renderTabela(colunasInput, dados) {
 
   const btnLogout = document.createElement('button')
   btnLogout.textContent = '🚪 Logout'
-  btnLogout.onclick = async () => {
-    await supabase.auth.signOut()
-    window.location.reload()
-  }
+  btnLogout.onclick = () => { sessionStorage.removeItem('app_pwd'); location.reload() }
   controles.appendChild(btnLogout)
 
   // Tabela
@@ -61,9 +58,10 @@ export function renderTabela(colunasInput, dados) {
     trHead.appendChild(th)
   }
   thead.appendChild(trHead)
+  tabela.appendChild(thead)
 
-  // Linhas da BD
-  for (const item of dados) {
+  // Corpo
+  dados.forEach(item => {
     const tr = document.createElement('tr')
     tr.dataset.id = item.id
 
@@ -94,149 +92,153 @@ export function renderTabela(colunasInput, dados) {
         label.classList.add('switch')
         const input = document.createElement('input')
         input.type = 'checkbox'
-        input.name = nome
         input.checked = !!item[nome]
-        input.addEventListener('change', () => tr.classList.toggle('finished', input.checked))
         const span = document.createElement('span')
         span.classList.add('slider')
         label.appendChild(input)
         label.appendChild(span)
         td.appendChild(label)
       }
-      else {
+      else if (col.tipo === 'timestamp with time zone' || col.tipo === 'timestamp without time zone') {
         const input = document.createElement('input')
-        input.name = nome
+        input.type = 'datetime-local'
+        if (item[nome]) {
+          const dt = new Date(item[nome])
+          const iso = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+          input.value = iso
+        }
+        td.appendChild(input)
+      }
+      else if (col.tipo === 'date') {
+        const input = document.createElement('input')
+        input.type = 'date'
+        if (item[nome]) input.value = new Date(item[nome]).toISOString().slice(0, 10)
+        td.appendChild(input)
+      }
+      else if (col.tipo === 'numeric' || col.tipo === 'integer' || col.tipo === 'bigint' || col.tipo === 'double precision') {
+        const input = document.createElement('input')
+        input.type = 'number'
         input.value = item[nome] ?? ''
         td.appendChild(input)
+      }
+      else if (col.tipo === 'text' || col.tipo === 'character varying') {
+        const input = document.createElement('input')
+        input.type = 'text'
+        input.value = item[nome] ?? ''
+        td.appendChild(input)
+      }
+      else if (FILE_FIELDS.includes(nome)) {
+        // já tratado acima
+      }
+      else {
+        td.textContent = item[nome] ?? ''
       }
 
       tr.appendChild(td)
     }
 
-    if (colunas.some(c => c.tipo === 'boolean' && item[c.nome])) {
-      tr.classList.add('finished')
-    }
+    tbody.appendChild(tr)
+  })
 
+  // Linha “nova”
+  function criarLinhaEditavel(tbody) {
+    const tr = document.createElement('tr')
+    tr.dataset.id = ''
+    for (const col of colunas) {
+      const nome = col.nome
+      const td = document.createElement('td')
+
+      if (nome === 'id') {
+        td.textContent = 'novo'
+      }
+      else if (FILE_FIELDS.includes(nome)) {
+        const input = document.createElement('input')
+        input.type = 'file'
+        input.multiple = true
+
+        input.onchange = async e => {
+          const files = Array.from(e.target.files)
+          if (!files.length) return
+          td.innerHTML = '⏳ a enviar…'
+          try {
+            const links = []
+            for (const file of files) links.push(await uploadFileToSupabase(file))
+            td.innerHTML = ''
+            links.forEach(link => {
+              const a = document.createElement('a')
+              a.href = link
+              a.target = '_blank'
+              a.textContent = link.split('/').pop().split('_').slice(1).join('_') || 'ficheiro'
+              a.style.display = 'block'
+              td.appendChild(a)
+            })
+            td.setAttribute('data-links', links.join(','))
+          } catch (err) {
+            td.textContent = 'Erro'
+            alert('Erro ao enviar ficheiros: ' + err.message)
+          }
+        }
+
+        td.appendChild(input)
+      }
+      else {
+        const input = document.createElement('input')
+        input.type = (col.tipo === 'numeric' || col.tipo === 'integer') ? 'number' : 'text'
+        td.appendChild(input)
+      }
+
+      tr.appendChild(td)
+    }
     tbody.appendChild(tr)
   }
 
-  tabela.appendChild(thead)
-  tabela.appendChild(tbody)
+  // Tabela final
   wrapper.appendChild(controles)
   wrapper.appendChild(tabela)
-}
+  tabela.appendChild(thead)
+  tabela.appendChild(tbody)
 
-// Adiciona linha nova
-function criarLinhaEditavel(tbody) {
-  const linha = document.createElement('tr')
-
-  for (const col of colunas) {
-    const nome = col.nome
-    const td = document.createElement('td')
-
-    if (nome === 'id') {
-      td.textContent = '(auto)'
-      linha.appendChild(td)
-      continue
-    }
-
-    if (FILE_FIELDS.includes(nome)) {
-      const input = document.createElement('input')
-      input.type = 'file'
-      input.accept = '*/*'
-      input.multiple = true
-
-      input.onchange = async e => {
-        const files = Array.from(e.target.files)
-        if (!files.length) return
-        td.innerHTML = '⏳ a enviar…'
-        try {
-          const links = []
-          for (const file of files) links.push(await uploadFileToSupabase(file))
-          td.innerHTML = ''
-          links.forEach(link => {
-            const a = document.createElement('a')
-            a.href = link
-            a.target = '_blank'
-            a.textContent = link.split('/').pop().split('_').slice(1).join('_') || 'ficheiro'
-            a.style.display = 'block'
-            td.appendChild(a)
-          })
-          td.setAttribute('data-links', links.join(','))
-        } catch (err) {
-          td.textContent = 'Erro'
-          alert('Erro ao enviar ficheiros: ' + err.message)
-        }
-      }
-
-      td.appendChild(input)
-      linha.appendChild(td)
-      continue
-    }
-
-    if (col.tipo === 'boolean') {
-      const label = document.createElement('label')
-      label.classList.add('switch')
-      const input = document.createElement('input')
-      input.type = 'checkbox'
-      input.name = nome
-      const span = document.createElement('span')
-      span.classList.add('slider')
-      label.appendChild(input)
-      label.appendChild(span)
-      td.appendChild(label)
+  // Helpers
+  function toggleSelecaoLinha(tr, id) {
+    if (selectedIds.has(id)) {
+      selectedIds.delete(id)
+      tr.classList.remove('selected')
     } else {
-      const input = document.createElement('input')
-      input.name = nome
-      input.type = nome === 'data' ? 'date' : 'text'
-      if (nome === 'data') input.valueAsDate = new Date()
-      td.appendChild(input)
+      selectedIds.add(id)
+      tr.classList.add('selected')
     }
-
-    linha.appendChild(td)
   }
-
-  tbody.appendChild(linha)
 }
 
 async function atualizarTudo() {
-  const tabela = document.querySelector('#tabela-wrapper table')
-  if (!tabela) return
-
-  const linhas = tabela.querySelectorAll('tbody tr')
-  if (!linhas.length) {
-    alert('Não há linhas para gravar!')
-    return
-  }
+  const tbody = document.querySelector('tbody')
+  const rows = Array.from(tbody.querySelectorAll('tr'))
 
   const updates = []
   const inserts = []
 
-  linhas.forEach(tr => {
+  rows.forEach(linha => {
+    const id = linha.dataset.id ? Number(linha.dataset.id) : null
+    const tds = Array.from(linha.children)
     const obj = {}
-    const id = Number(tr.dataset.id) || null
-    const tds = tr.querySelectorAll('td')
 
-    let tdPos = 0
-    for (const col of colunas) {
-      const td = tds[tdPos++]
+    for (let i = 0; i < tds.length; i++) {
+      const col = colunas[i]
       const nome = col.nome
+      const td = tds[i]
+
       if (nome === 'id') continue
 
-      if (FILE_FIELDS.includes(nome)) {
-        if (!id) {
-          const links = td.getAttribute('data-links')
-          obj[nome] = links || null
-        }
-        continue
-      }
-
-      if (col.tipo === 'boolean') {
-        obj[nome] = td.querySelector('input[type="checkbox"]')?.checked ?? false
+      if (td.hasAttribute('data-links')) {
+        obj[nome] = td.getAttribute('data-links')
       } else {
-        let valor = td.querySelector('input')?.value ?? null
-        valor = valor === '' ? null : valor
-        if (col.tipo === 'number' && valor !== null) valor = Number(valor)
+        const input = td.querySelector('input')
+        let valor = input ? input.value : td.textContent
+
+        if (col.tipo === 'boolean' && input) valor = input.checked
+        if ((col.tipo || '').startsWith('timestamp') && valor) valor = new Date(valor).toISOString()
+        if ((col.tipo === 'numeric' || col.tipo === 'integer' || col.tipo === 'double precision') && valor !== '') valor = Number(valor)
+
         obj[nome] = valor
       }
     }
@@ -249,37 +251,11 @@ async function atualizarTudo() {
   })
 
   try {
-    for (const { id, ...dados } of updates) {
-      const { count, error } = await supabase
-        .from('Encomendas')
-        .update(dados, { count: 'exact' })
-        .eq('id', id)
-
-      if (error) throw error
-    }
-
-    if (inserts.length) {
-      const { error } = await supabase
-        .from('Encomendas')
-        .insert(inserts)
-
-      if (error) throw error
-    }
-
+    if (updates.length) { await updateEncomendas(updates) }
+    if (inserts.length) { await insertEncomendas(inserts) }
     location.reload()
   } catch (err) {
     alert('Erro ao gravar: ' + err.message)
-    console.error(err)
-  }
-}
-
-function toggleSelecaoLinha(tr, id) {
-  if (selectedIds.has(id)) {
-    selectedIds.delete(id)
-    tr.classList.remove('selected')
-  } else {
-    selectedIds.add(id)
-    tr.classList.add('selected')
   }
 }
 
@@ -289,10 +265,6 @@ async function removerSelecionadas() {
     return
   }
   const idsArray = [...selectedIds]
-  const { error } = await supabase.from('Encomendas').delete().in('id', idsArray)
-  if (error) {
-    alert('Erro ao remover: ' + error.message)
-    return
-  }
-  location.reload()
+  try { await deleteEncomendas(idsArray); location.reload() }
+  catch (e) { alert('Erro ao remover: ' + e.message) }
 }

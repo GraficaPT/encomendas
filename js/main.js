@@ -1,57 +1,64 @@
 import { supabase } from './config.js'
-import { fetchColunas, fetchEncomendas } from './supabase.js'
+import { fetchColunas, fetchEncomendas, verifyPassword } from './supabase.js'
 import { renderTabela, setColunas } from './tabela.js'
 
-// --- Autenticação por Magic Link ---
-async function pedirLoginMagicLink() {
-  const { data: { session } } = await supabase.auth.getSession()
-  if (session) return session // Já autenticado
-
-  // Mostra form para introduzir email
+// --- Autenticação por password única ---
+function showPasswordForm(msg='Acesso restrito') {
   const div = document.createElement('div')
   div.style.textAlign = 'center'
   div.innerHTML = `
-    <h2>Acesso restrito</h2>
-    <form id="magic-link-form">
-      <input type="email" id="magic-link-email" placeholder="Email" required style="font-size:1.2rem;padding:0.5rem;" />
-      <button type="submit" style="font-size:1.2rem;padding:0.5rem 2rem;">Receber link de acesso</button>
+    <h2>${msg}</h2>
+    <form id="pwd-form" style="display:inline-flex; gap:.5rem; align-items:center;">
+      <input type="password" id="master-pwd" placeholder="Password" required style="font-size:1.1rem;padding:.5rem;min-width:260px" />
+      <button type="submit" style="font-size:1.1rem;padding:.55rem 1.25rem;">Entrar</button>
     </form>
-    <div id="magic-link-status"></div>
+    <p id="pwd-status" style="margin-top:.75rem;color:#999"></p>
   `
   document.body.innerHTML = ''
   document.body.appendChild(div)
 
-  document.getElementById('magic-link-form').onsubmit = async (e) => {
+  document.getElementById('pwd-form').addEventListener('submit', async (e) => {
     e.preventDefault()
-    const email = document.getElementById('magic-link-email').value
-    document.getElementById('magic-link-status').textContent = 'A enviar link…'
-    const { error } = await supabase.auth.signInWithOtp({ email })
-    if (error) {
-      document.getElementById('magic-link-status').textContent = 'Erro: ' + error.message
-    } else {
-      document.getElementById('magic-link-status').textContent = 'Verifica o teu email e clica no link para aceder.'
+    const pwd = document.getElementById('master-pwd').value
+    const status = document.getElementById('pwd-status')
+    status.textContent = 'A validar…'
+    try {
+      const ok = await verifyPassword(pwd)
+      if (!ok) throw new Error('Password inválida')
+      sessionStorage.setItem('app_pwd', pwd)
+      location.reload()
+    } catch (err) {
+      status.style.color = '#c00'
+      status.textContent = err.message
     }
-  }
+  })
 }
 
-// --- Só faz reload automático no evento certo (evita loops infinitos) ---
-supabase.auth.onAuthStateChange((event, session) => {
-  if (event === "SIGNED_IN" && session) {
-    // Só faz reload se vier com parâmetros na URL (magic link)
-    if (window.location.search || window.location.hash) {
-      window.location.href = window.location.pathname
-    }
+async function garantirSessao() {
+  const pwd = sessionStorage.getItem('app_pwd')
+  if (!pwd) {
+    showPasswordForm()
+    return false
   }
-})
+  const ok = await verifyPassword(pwd).catch(()=>false)
+  if (!ok) {
+    sessionStorage.removeItem('app_pwd')
+    showPasswordForm('Sessão expirada ou password inválida')
+    return false
+  }
+  return true
+}
 
-// --- Garante que processa a sessão vinda do magic link logo ao entrar ---
-await supabase.auth.getSession()
-
-// --- Só carrega a app para utilizadores autenticados ---
-await pedirLoginMagicLink()
-
-// --- O resto do teu código só corre depois de autenticado ---
 async function carregarTudo() {
+  const has = await garantirSessao()
+  if (!has) return
+
+  // Resto do layout
+  document.body.innerHTML = `
+    <div id="status"></div>
+    <div class="tabela-wrapper" id="tabela-wrapper"></div>
+  `
+
   document.getElementById('status').textContent = 'A carregar…'
   try {
     const colunas = await fetchColunas()
