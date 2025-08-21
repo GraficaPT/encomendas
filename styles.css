@@ -111,6 +111,12 @@ td input {
   border-radius: 50%;
 }
 
+.btn {
+  color: #000;
+  background-color: white;
+  border-radius: 10%;
+}
+
 input:checked + .slider {
   background-color: lightgreen;
 }
