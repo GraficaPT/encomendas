@@ -1,6 +1,6 @@
 import { supabase } from './config.js'
 
-// Utils
+// ---- Utils ----
 function getPwd() {
   return sessionStorage.getItem('app_pwd') || ''
 }
@@ -24,39 +24,45 @@ export async function uploadFileToSupabase(file) {
 
 // ---- Dados ----
 
-// Colunas (mantém a view; se quiseres, posso criar uma RPC também)
+// View de colunas usada para montar o cabeçalho da tabela
 export async function fetchColunas() {
-  const { data, error } = await supabase.from('view_colunas_encomendas').select('*')
+  const { data, error } = await supabase
+    .from('view_colunas_encomendas')
+    .select('*')
   if (error) throw error
   return data.map(c => ({ nome: c.column_name, tipo: c.data_type }))
 }
 
-// Encomendas via RPC protegida por password
+// Lista encomendas via RPC
 export async function fetchEncomendas() {
   const { data, error } = await supabase.rpc('list_encomendas', { pwd: getPwd() })
   if (error) throw error
   return data
 }
 
-// Operações de escrita via RPC
+// Atualiza linhas (array de objetos com id e campos a alterar)
 export async function updateEncomendas(updates) {
-  const { error } = await supabase.rpc('update_encomendas', { pwd: getPwd(), rows: updates })
+  const { error } = await supabase.rpc('update_encomendas', {
+    pwd: getPwd(),
+    rows: updates
+  })
   if (error) throw error
 }
 
+// Insere linhas (array de objetos sem id)
 export async function insertEncomendas(inserts) {
-  const { error } = await supabase.rpc('insert_encomendas', { pwd: getPwd(), rows: inserts })
+  const { error } = await supabase.rpc('insert_encomendas', {
+    pwd: getPwd(),
+    rows: inserts
+  })
   if (error) throw error
 }
 
+// Apaga por ids (array de bigint)
 export async function deleteEncomendas(ids) {
-  const { error } = await supabase.rpc('delete_encomendas', { pwd: getPwd(), ids })
+  const { error } = await supabase.rpc('delete_encomendas', {
+    pwd: getPwd(),
+    ids
+  })
   if (error) throw error
-}
-
-export async function sha256(message) {
-  const msgBuffer = new TextEncoder().encode(message);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
